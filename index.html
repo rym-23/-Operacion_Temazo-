@@ -16,6 +16,7 @@
       --silver: #c0c0c0;
       --bronze: #cd7f32;
       --lyrics-bg: rgba(147, 112, 219, 0.15);
+      --question: #6bff8f;
     }
     
     * {
@@ -312,6 +313,7 @@
       display: flex;
       justify-content: space-between;
       margin-bottom: 15px;
+      flex-wrap: wrap;
     }
     
     .rating {
@@ -319,6 +321,8 @@
       flex-direction: column;
       align-items: center;
       flex: 1;
+      min-width: 80px;
+      margin-bottom: 10px;
     }
     
     .rating-emoji {
@@ -795,7 +799,10 @@
       { title: "traitor", author: "Olivia Rodrigo", suggestedBy: "Juli", golden: false, lyrics: "Letra no disponible" },
       { title: "drivers license", author: "Olivia Rodrigo", suggestedBy: "Juli", golden: false, lyrics: "Letra no disponible" },
       { title: "vampire", author: "Olivia Rodrigo", suggestedBy: "Juli", golden: false, lyrics: "Letra no disponible" },
-      { title: "Nunca vas a comprender", author: "Rita Payés, Elisabeth Roma", suggestedBy: "Juli", golden: false, lyrics: "Letra no disponible" }
+      { title: "Nunca vas a comprender", author: "Rita Payés, Elisabeth Roma", suggestedBy: "Juli", golden: false, lyrics: "Letra no disponible" },
+      // NUEVAS CANCIONES CON OPCIÓN DE INTERROGACIÓN
+      { title: "Louise", author: "tv girl", suggestedBy: "Rym", golden: false, lyrics: "Letra no disponible", hasQuestion: true },
+      { title: "Walk of Life", author: "Dire Straits", suggestedBy: "Rym", golden: false, lyrics: "Letra no disponible", hasQuestion: true }
     ];
 
     // Jueces con sus emojis actualizados
@@ -823,6 +830,11 @@
         judge3: 0,
         average: 0
       };
+      
+      // Agregar puntuación de interrogación si la canción la tiene
+      if (song.hasQuestion) {
+        ratings[index].question = 0;
+      }
     });
 
     // Formatear tiempo (segundos a MM:SS)
@@ -906,7 +918,9 @@
         };
         card.appendChild(lyricsBtn);
         
-        card.innerHTML += `
+        // Añadir contenido de la tarjeta
+        const cardContent = document.createElement('div');
+        cardContent.innerHTML = `
           <div class="song-header">
             <div class="song-image">🎵</div>
             <div>
@@ -937,7 +951,16 @@
                   <div class="rating-value">0</div>
                 </div>
               `).join('')}
-
+              
+              <!-- Opción de interrogación solo para canciones específicas -->
+              ${song.hasQuestion ? `
+                <div class="rating">
+                  <div class="rating-emoji">❓</div>
+                  <input type="range" class="rating-slider" min="1" max="10" value="0" 
+                         data-song="${index}" data-judge="question">
+                  <div class="rating-value">0</div>
+                </div>
+              ` : ''}
             </div>
             <div class="song-average">
               Promedio: <span class="average-value" id="average-${index}">0.0</span>
@@ -949,6 +972,8 @@
             </div>
           </div>
         `;
+        
+        card.appendChild(cardContent);
         container.appendChild(card);
       });
       
@@ -1064,8 +1089,14 @@
     // Calcular promedio para una canción
     function calculateAverage(songId) {
       const judgeScores = [ratings[songId].judge1, ratings[songId].judge2, ratings[songId].judge3];
+      
+      // Si la canción tiene puntuación de interrogación, incluirla en el cálculo
+      if (songs[songId].hasQuestion) {
+        judgeScores.push(ratings[songId].question);
+      }
+      
       const sum = judgeScores.reduce((acc, score) => acc + score, 0);
-      ratings[songId].average = sum / 3;
+      ratings[songId].average = sum / judgeScores.length;
       
       // Actualizar UI
       const averageElement = document.getElementById(`average-${songId}`);
@@ -1288,6 +1319,12 @@
           judge3: 0,
           average: 0
         };
+        
+        // Reiniciar también la puntuación de interrogación si existe
+        if (song.hasQuestion) {
+          ratings[index].question = 0;
+        }
+        
         song.golden = false; // Quitar todos los pases de oro
       });
       
@@ -1349,56 +1386,4 @@
     });
   </script>
 </body>
-</html><!-- Agrega esto antes de </body> -->
-<div id="lyricsModal" class="lyrics-modal">
-  <div class="lyrics-modal-content">
-    <span class="lyrics-modal-close">&times;</span>
-    <div id="lyricsModalBody"></div>
-  </div>
-</div>
-
-<style>
-.lyrics-modal {
-  display: none;
-  position: fixed;
-  z-index: 2000;
-  left: 0; top: 0;
-  width: 100vw; height: 100vh;
-  background: rgba(30,30,50,0.85);
-  align-items: center; justify-content: center;
-}
-.lyrics-modal-content {
-  background: #fff;
-  margin: auto;
-  padding: 30px 20px;
-  border-radius: 18px;
-  max-width: 500px;
-  max-height: 70vh;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-.lyrics-modal-close {
-  position: absolute;
-  top: 15px; right: 25px;
-  font-size: 2rem;
-  color: #333;
-  cursor: pointer;
-  font-weight: bold;
-  z-index: 10;
-}
-#lyricsModalBody {
-  overflow-y: auto;
-  max-height: 55vh;
-  padding-right: 10px;
-  font-style: italic;
-  line-height: 1.6;
-  text-align: center;
-  white-space: pre-line;
-  color: #222; /* Mantener texto oscuro dentro del modal (el modal tiene fondo blanco) */
-}
-</style>
-
-<!-- Modal HTML and CSS remain, but duplicate JS and container are removed. -->
+</html>
